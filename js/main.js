@@ -253,7 +253,24 @@
 	  'autoclose': true
 	});
 
-	$('.appointment_time').timepicker();
+        $('.appointment_time').timepicker();
+
+  function applyImageFallback(img) {
+    if (!img || img.dataset.fallbackApplied) {
+      return;
+    }
+    img.dataset.fallbackApplied = 'true';
+    img.alt = img.alt || 'تصویر در دسترس نیست';
+    img.classList.add('image-broken-placeholder');
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80"><rect width="120" height="80" rx="8" fill="#e2e8f0"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="14" fill="#475569">تصویر</text></svg>';
+    img.src = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+
+  document.querySelectorAll('img').forEach(function (img) {
+    img.addEventListener('error', function () {
+      applyImageFallback(img);
+    }, { once: true });
+  });
 
 
 
