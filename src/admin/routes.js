@@ -1,4 +1,3 @@
-/* eslint-disable */
 const express = require('express');
 const csrf = require('csurf');
 const helmet = require('helmet');
@@ -13,19 +12,12 @@ const { body, validationResult, query } = require('express-validator');
 const { v4: uuid } = require('uuid');
 const { getPool } = require('../db');
 const config = require('../config');
-const { _0x4473, _0x2f7f } = require('../obfuscation/runtime');
-const {
-  login,
-  logout,
-  ensureAuthenticated,
-  recordAudit,
-  requireRole
-} = require('./auth');
+const { login, logout, ensureAuthenticated, recordAudit, requireRole } = require('./auth');
 
 const router = express.Router();
 const csrfProtection = csrf({ cookie: false });
 
-const uploadsDir = path.resolve(__dirname, _0x4473('Li4vLi4vdXBsb2Fkcw=='));
+const uploadsDir = path.resolve(__dirname, '../../uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -35,77 +27,61 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const safeName = file.originalname.replace(/[^a-zA-Z0-9_.-]+/g, '_');
     cb(null, `${Date.now()}-${safeName}`);
-  }
+  },
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-const allowContentAccess = requireRole([
-  _0x4473('YWJzb2x1dGVfZGV2ZWxvcGVy'),
-  _0x4473('ZGV2ZWxvcGVyX3RlYW0='),
-  _0x4473('c2Nob29sX3RlYW0=')
-]);
-const allowDeveloperTeam = requireRole([
-  _0x4473('YWJzb2x1dGVfZGV2ZWxvcGVy'),
-  _0x4473('ZGV2ZWxvcGVyX3RlYW0=')
-]);
-const allowSuperAdmin = requireRole([_0x4473('YWJzb2x1dGVfZGV2ZWxvcGVy')]);
+const allowContentAccess = requireRole(['absolute_developer', 'developer_team', 'school_team']);
+const allowDeveloperTeam = requireRole(['absolute_developer', 'developer_team']);
+const allowSuperAdmin = requireRole(['absolute_developer']);
 
-const _0x39fa = {
-  success: _0x4473('c3VjY2Vzcw=='),
-  error: _0x4473('ZXJyb3I='),
-  disabled: _0x4473('ZGlzYWJsZWQ='),
-  login: _0x4473('bG9naW4='),
-  logout: _0x4473('bG9nb3V0'),
-  uploadSuccess: _0x4473('dXBsb2FkX3N1Y2Nlc3M='),
-  deleted: _0x4473('ZGVsZXRlZA=='),
-  updated: _0x4473('dXBkYXRlZA=='),
-  created: _0x4473('Y3JlYXRlZA=='),
-  fileRequired: _0x4473('ZmlsZV9yZXF1aXJlZA=='),
-  statementNotAllowed: _0x4473('c3RhdGVtZW50X25vdF9hbGxvd2Vk'),
-  queryFailed: _0x4473('cXVlcnlfZmFpbGVk')
+const RESPONSE = {
+  success: 'success',
+  error: 'error',
 };
 
-const _0x53d7 = {
-  auditSelect: _0x4473('U0VMRUNUIGlkLCB0cywgdXNlcl9pZCwgSU5FVDZfTlRPQShpcCkgQVMgaXAsIGFjdGlvbiwgZGV0YWlscyBGUk9NIGF1ZGl0X2xvZ3M='),
-  staffSelect: _0x4473('U0VMRUNUICogRlJPTSBzdGFmZiBPUkRFUiBCWSBzb3J0X29yZGVyLCBpZCBERVND'),
-  staffInsert: _0x4473('SU5TRVJUIElOVE8gc3RhZmYgKG5hbWUsIHRpdGxlLCBiaW9fc2hvcnQsIGJpb19sb25nLCBwaG90b19wYXRoLCBzb2NpYWwsIHNvcnRfb3JkZXIpIFZBTFVFUyAoPywgPywgPywgPywgPywgPywgPyk='),
-  staffUpdate: _0x4473('VVBEQVRFIHN0YWZmIFNFVCBuYW1lPT8sIHRpdGxlPT8sIGJpb19zaG9ydD0/LCBiaW9fbG9uZz0/LCBwaG90b19wYXRoPT8sIHNvY2lhbD0/LCBzb3J0X29yZGVyPT8gV0hFUkUgaWQ9Pw=='),
-  teacherSelect: _0x4473('U0VMRUNUICogRlJPTSB0ZWFjaGVycyBPUkRFUiBCWSBzb3J0X29yZGVyLCBpZCBERVND'),
-  teacherInsert: _0x4473('SU5TRVJUIElOVE8gdGVhY2hlcnMgKG5hbWUsIHN1YmplY3QsIGJpbywgcGhvdG9fcGF0aCwgc29ydF9vcmRlciwgYWN0aXZlKSBWQUxVRVMgKD8sID8sID8sID8sID8sID8p'),
-  teacherUpdate: _0x4473('VVBEQVRFIHRlYWNoZXJzIFNFVCBuYW1lPT8sIHN1YmplY3Q9PywgYmlvPT8sIHBob3RvX3BhdGg9Pywgc29ydF9vcmRlcj0/LCBhY3RpdmU9PyBXSEVSRSBpZD0/'),
-  classSelect: _0x4473('U0VMRUNUICogRlJPTSBjbGFzc2VzIE9SREVSIEJZIGNyZWF0ZWRfYXQgREVTQw=='),
-  classInsert: _0x4473('SU5TRVJUIElOVE8gY2xhc3NlcyAodGl0bGUsIHNsdWcsIHNjaGVkdWxlLCBkZXNjcmlwdGlvbiwgY2FwYWNpdHksIGFjdGl2ZSkgVkFMVUVTICg/LCA/LCA/LCA/LCA/LCA/KQ=='),
-  classUpdate: _0x4473('VVBEQVRFIGNsYXNzZXMgU0VUIHRpdGxlPT8sIHNsdWc9Pywgc2NoZWR1bGU9PywgZGVzY3JpcHRpb249PywgY2FwYWNpdHk9PywgYWN0aXZlPT8gV0hFUkUgaWQ9Pw=='),
-  programSelect: _0x4473('U0VMRUNUICogRlJPTSBwcm9ncmFtcyBPUkRFUiBCWSBjcmVhdGVkX2F0IERFU0M='),
-  programInsert: _0x4473('SU5TRVJUIElOVE8gcHJvZ3JhbXMgKHRpdGxlLCBkZXNjcmlwdGlvbiwgdmlzaWJsZSkgVkFMVUVTICg/LCA/LCA/KQ=='),
-  programUpdate: _0x4473('VVBEQVRFIHByb2dyYW1zIFNFVCB0aXRsZT0/LCBkZXNjcmlwdGlvbj0/LCB2aXNpYmxlPT8gV0hFUkUgaWQ9Pw=='),
-  articleSelect: _0x4473('U0VMRUNUICogRlJPTSBhcnRpY2xlcyBPUkRFUiBCWSBwdWJsaXNoZWRfYXQgREVTQywgY3JlYXRlZF9hdCBERVND'),
-  articleInsert: _0x4473('SU5TRVJUIElOVE8gYXJ0aWNsZXMgKHNsdWcsIHRpdGxlLCBleGNlcnB0LCBjb250ZW50LCByZWFkX21vcmVfdXJsLCBhdXRob3JfaWQsIHB1Ymxpc2hlZF9hdCwgdGFncykgVkFMVUVTICg/LCA/LCA/LCA/LCA/LCA/LCA/LCA/KQ=='),
-  articleUpdate: _0x4473('VVBEQVRFIGFydGljbGVzIFNFVCBzbHVnPT8sIHRpdGxlPT8sIGV4Y2VycHQ9PywgY29udGVudD0/LCByZWFkX21vcmVfdXJsPT8sIHB1Ymxpc2hlZF9hdD0/LCB0YWdzPT8gV0hFUkUgaWQ9Pw=='),
-  fileSelect: _0x4473('U0VMRUNUIGlkLCBmaWxlbmFtZSwgcGF0aCwgbWltZSwgc2l6ZSwgY3JlYXRlZF9hdCBGUk9NIGZpbGVzIE9SREVSIEJZIGNyZWF0ZWRfYXQgREVTQw=='),
-  fileInsert: _0x4473('SU5TRVJUIElOVE8gZmlsZXMgKGZpbGVuYW1lLCBwYXRoLCBtaW1lLCBzaXplLCB1cGxvYWRlZF9ieSkgVkFMVUVTICg/LCA/LCA/LCA/LCA/KQ==')
+const STATUS = {
+  disabled: 'disabled',
+  fileRequired: 'file_required',
+  statementNotAllowed: 'statement_not_allowed',
+  queryFailed: 'query_failed',
+};
+
+const QUERIES = {
+  auditSelect: 'SELECT id, ts, user_id, INET6_NTOA(ip) AS ip, action, details FROM audit_logs',
+  staffSelect: 'SELECT * FROM staff ORDER BY sort_order, id DESC',
+  staffInsert:
+    'INSERT INTO staff (name, title, bio_short, bio_long, photo_path, social, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  staffUpdate:
+    'UPDATE staff SET name=?, title=?, bio_short=?, bio_long=?, photo_path=?, social=?, sort_order=? WHERE id=?',
+  teacherSelect: 'SELECT * FROM teachers ORDER BY sort_order, id DESC',
+  teacherInsert: 'INSERT INTO teachers (name, subject, bio, photo_path, sort_order, active) VALUES (?, ?, ?, ?, ?, ?)',
+  teacherUpdate: 'UPDATE teachers SET name=?, subject=?, bio=?, photo_path=?, sort_order=?, active=? WHERE id=?',
+  classSelect: 'SELECT * FROM classes ORDER BY created_at DESC',
+  classInsert: 'INSERT INTO classes (title, slug, schedule, description, capacity, active) VALUES (?, ?, ?, ?, ?, ?)',
+  classUpdate: 'UPDATE classes SET title=?, slug=?, schedule=?, description=?, capacity=?, active=? WHERE id=?',
+  programSelect: 'SELECT * FROM programs ORDER BY created_at DESC',
+  programInsert: 'INSERT INTO programs (title, description, visible) VALUES (?, ?, ?)',
+  programUpdate: 'UPDATE programs SET title=?, description=?, visible=? WHERE id=?',
+  articleSelect: 'SELECT * FROM articles ORDER BY published_at DESC, created_at DESC',
+  articleInsert:
+    'INSERT INTO articles (slug, title, excerpt, content, read_more_url, author_id, published_at, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+  articleUpdate:
+    'UPDATE articles SET slug=?, title=?, excerpt=?, content=?, read_more_url=?, published_at=?, tags=? WHERE id=?',
+  fileSelect: 'SELECT id, filename, path, mime, size, created_at FROM files ORDER BY created_at DESC',
+  fileInsert: 'INSERT INTO files (filename, path, mime, size, uploaded_by) VALUES (?, ?, ?, ?, ?)',
 };
 
 function handleValidation(req, res, next) {
   const errors = validationResult(req);
-  let handled = false;
-  _0x2f7f([
-    () => {
-      if (!errors.isEmpty()) {
-        handled = true;
-        res.status(422).json({ errors: errors.array() });
-      }
-    },
-    () => {
-      if (!handled) {
-        next();
-      }
-    }
-  ]);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+  return next();
 }
 
 function sanitizeRichText(value) {
@@ -115,16 +91,17 @@ function sanitizeRichText(value) {
     allowedAttributes: {
       a: ['href', 'target', 'rel'],
       img: ['src', 'alt', 'title', 'loading'],
-      '*': ['class']
+      '*': ['class'],
     },
     allowedSchemes: ['http', 'https', 'mailto'],
-    allowedSchemesByTag: {}
+    allowedSchemesByTag: {},
   });
 }
 
 function sanitizePlainText(value) {
-  if (!value) return null;
-  return sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }).trim();
+  if (value === undefined || value === null) return null;
+  const cleaned = sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }).trim();
+  return cleaned.length ? cleaned : null;
 }
 
 function parseJson(value) {
@@ -139,41 +116,41 @@ function parseJson(value) {
 
 function createSessionMiddleware() {
   const options = {
-    name: _0x4473('bm9mZG9ldC5zaWQ='),
+    name: 'nofdoet.sid',
     secret: config.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
-    }
+      sameSite: 'strict',
+    },
   };
-  _0x2f7f([
-    () => {
-      if (process.env.REDIS_URL) {
-        const client = new Redis(process.env.REDIS_URL);
-        options.store = new RedisStore({ client, prefix: _0x4473('bm9mZG9ldDo=') });
-      }
-    }
-  ]);
+
+  if (process.env.REDIS_URL) {
+    const client = new Redis(process.env.REDIS_URL);
+    options.store = new RedisStore({ client, prefix: 'nofdoet:' });
+  }
+
   return session(options);
 }
 
-router.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      imgSrc: ["'self'", 'data:'],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      objectSrc: ["'none'"]
-    }
-  },
-  hsts: process.env.NODE_ENV === 'production'
-}));
+router.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        imgSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        objectSrc: ["'none'"],
+      },
+    },
+    hsts: process.env.NODE_ENV === 'production',
+  }),
+);
 router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
 router.use(createSessionMiddleware());
@@ -185,24 +162,24 @@ router.get('/csrf-token', csrfProtection, (req, res) => {
 router.post('/login', csrfProtection, async (req, res) => {
   try {
     const user = await login(req.body, req);
-    await recordAudit(user.id, req.ip, _0x39fa.login, { user: user.username });
-    res.json({ [_0x39fa.success]: true, user });
+    await recordAudit(user.id, req.ip, 'login', { user: user.username });
+    res.json({ [RESPONSE.success]: true, user });
   } catch (error) {
-    res.status(400).json({ [_0x39fa.error]: error.message });
+    res.status(400).json({ [RESPONSE.error]: error.message });
   }
 });
 
 router.post('/logout', ensureAuthenticated, async (req, res) => {
-  await recordAudit(req.session.user.id, req.ip, _0x39fa.logout, {});
+  await recordAudit(req.session.user.id, req.ip, 'logout', {});
   await logout(req);
-  res.json({ [_0x39fa.success]: true });
+  res.json({ [RESPONSE.success]: true });
 });
 
 router.post('/2fa/verify', ensureAuthenticated, csrfProtection, (req, res) => {
   if (!config.ENABLE_2FA_PLACEHOLDER) {
-    return res.status(404).json({ [_0x39fa.error]: _0x39fa.disabled });
+    return res.status(404).json({ [RESPONSE.error]: STATUS.disabled });
   }
-  return res.json({ [_0x39fa.success]: true, placeholder: true });
+  return res.json({ [RESPONSE.success]: true, placeholder: true });
 });
 
 router.get('/session', ensureAuthenticated, (req, res) => {
@@ -216,7 +193,7 @@ router.get(
   [
     query('limit').optional().isInt({ min: 1, max: 500 }).toInt(),
     query('user_id').optional().isInt({ min: 1 }).toInt(),
-    query('action').optional({ checkFalsy: true }).trim().isLength({ max: 128 })
+    query('action').optional({ checkFalsy: true }).trim().isLength({ max: 128 }),
   ],
   handleValidation,
   async (req, res) => {
@@ -232,15 +209,15 @@ router.get(
       conditions.push('action = ?');
       params.push(action);
     }
-    let sql = _0x53d7.auditSelect;
+    let sql = QUERIES.auditSelect;
     if (conditions.length) {
       sql += ` WHERE ${conditions.join(' AND ')}`;
     }
-    sql += ` ${_0x4473('T1JERVIgQlkgdHMgREVTQyBMSU1JVCA/')}`;
+    sql += ' ORDER BY ts DESC LIMIT ?';
     params.push(limit);
     const [rows] = await pool.query(sql, params);
     res.json(rows);
-  }
+  },
 );
 
 const staffValidators = [
@@ -258,7 +235,7 @@ const staffValidators = [
     if (Array.isArray(value)) return true;
     throw new Error('social must be an array or JSON string');
   }),
-  body('sort_order').optional().isInt({ min: 0, max: 9999 }).toInt()
+  body('sort_order').optional().isInt({ min: 0, max: 9999 }).toInt(),
 ];
 
 const teacherValidators = [
@@ -268,7 +245,7 @@ const teacherValidators = [
   body('bio').optional({ checkFalsy: true }).isString(),
   body('photo_path').optional({ checkFalsy: true }).trim().isLength({ max: 1024 }),
   body('sort_order').optional().isInt({ min: 0, max: 9999 }).toInt(),
-  body('active').optional().isBoolean().toBoolean()
+  body('active').optional().isBoolean().toBoolean(),
 ];
 
 const classValidators = [
@@ -285,14 +262,14 @@ const classValidators = [
   }),
   body('description').optional({ checkFalsy: true }).isString(),
   body('capacity').optional({ checkFalsy: true }).isInt({ min: 0, max: 9999 }).toInt(),
-  body('active').optional().isBoolean().toBoolean()
+  body('active').optional().isBoolean().toBoolean(),
 ];
 
 const programValidators = [
   body('id').optional().isInt({ min: 1 }).toInt(),
   body('title').trim().notEmpty().isLength({ max: 255 }),
   body('description').optional({ checkFalsy: true }).isString(),
-  body('visible').optional().isBoolean().toBoolean()
+  body('visible').optional().isBoolean().toBoolean(),
 ];
 
 const articleValidators = [
@@ -310,12 +287,12 @@ const articleValidators = [
     }
     if (Array.isArray(value)) return true;
     throw new Error('tags must be array or JSON');
-  })
+  }),
 ];
 
 router.get('/staff', ensureAuthenticated, allowContentAccess, async (req, res) => {
   const pool = getPool();
-  const [rows] = await pool.query(_0x53d7.staffSelect);
+  const [rows] = await pool.query(QUERIES.staffSelect);
   res.json(rows);
 });
 
@@ -333,52 +310,48 @@ router.post(
     const socialRaw = parseJson(payload.social);
     const social = Array.isArray(socialRaw)
       ? socialRaw
-        .filter(item => typeof item === 'string' && item.trim())
-        .map(item => sanitizePlainText(item) || '')
-        .filter(Boolean)
+          .filter(item => typeof item === 'string' && item.trim())
+          .map(item => sanitizePlainText(item) || '')
+          .filter(Boolean)
       : [];
-    const bioShort = sanitizePlainText(payload.bio_short) || null;
+    const bioShort = sanitizePlainText(payload.bio_short);
     const bioLong = sanitizeRichText(payload.bio_long || '');
     const name = sanitizePlainText(payload.name);
     const title = sanitizePlainText(payload.title);
     const photoPath = sanitizePlainText(payload.photo_path);
+    const sortOrder = typeof payload.sort_order === 'number' ? payload.sort_order : payload.sort_order || 0;
+
     if (id) {
-      await pool.query(
-        _0x53d7.staffUpdate,
-        [
-          name,
-          title,
-          bioShort,
-          bioLong,
-          photoPath,
-          JSON.stringify(social),
-          payload.sort_order || 0,
-          id
-        ]
-      );
-      await recordAudit(req.session.user.id, req.ip, _0x4473('c3RhZmYudXBkYXRl'), { id });
+      await pool.query(QUERIES.staffUpdate, [
+        name,
+        title,
+        bioShort,
+        bioLong,
+        photoPath,
+        JSON.stringify(social),
+        sortOrder,
+        id,
+      ]);
+      await recordAudit(req.session.user.id, req.ip, 'staff.update', { id });
     } else {
-      const [result] = await pool.query(
-        _0x53d7.staffInsert,
-        [
-          name,
-          title,
-          bioShort,
-          bioLong,
-          photoPath,
-          JSON.stringify(social),
-          payload.sort_order || 0
-        ]
-      );
-      await recordAudit(req.session.user.id, req.ip, _0x4473('c3RhZmYuY3JlYXRl'), { id: result.insertId });
+      const [result] = await pool.query(QUERIES.staffInsert, [
+        name,
+        title,
+        bioShort,
+        bioLong,
+        photoPath,
+        JSON.stringify(social),
+        sortOrder,
+      ]);
+      await recordAudit(req.session.user.id, req.ip, 'staff.create', { id: result.insertId });
     }
-    res.json({ [_0x39fa.success]: true });
-  }
+    res.json({ [RESPONSE.success]: true });
+  },
 );
 
 router.get('/teachers', ensureAuthenticated, allowContentAccess, async (req, res) => {
   const pool = getPool();
-  const [rows] = await pool.query(_0x53d7.teacherSelect);
+  const [rows] = await pool.query(QUERIES.teacherSelect);
   res.json(rows);
 });
 
@@ -397,28 +370,23 @@ router.post(
     const subject = sanitizePlainText(payload.subject);
     const bio = sanitizeRichText(payload.bio || '');
     const photoPath = sanitizePlainText(payload.photo_path);
-    const sortOrder = payload.sort_order || 0;
-    const active = payload.active === undefined ? 1 : (payload.active ? 1 : 0);
+    const sortOrder = typeof payload.sort_order === 'number' ? payload.sort_order : payload.sort_order || 0;
+    const active = payload.active === undefined ? 1 : payload.active ? 1 : 0;
+
     if (id) {
-      await pool.query(
-        _0x53d7.teacherUpdate,
-        [name, subject, bio, photoPath, sortOrder, active, id]
-      );
-      await recordAudit(req.session.user.id, req.ip, _0x4473('dGVhY2hlcnMudXBkYXRl'), { id });
+      await pool.query(QUERIES.teacherUpdate, [name, subject, bio, photoPath, sortOrder, active, id]);
+      await recordAudit(req.session.user.id, req.ip, 'teachers.update', { id });
     } else {
-      const [result] = await pool.query(
-        _0x53d7.teacherInsert,
-        [name, subject, bio, photoPath, sortOrder, active]
-      );
-      await recordAudit(req.session.user.id, req.ip, _0x4473('dGVhY2hlcnMuY3JlYXRl'), { id: result.insertId });
+      const [result] = await pool.query(QUERIES.teacherInsert, [name, subject, bio, photoPath, sortOrder, active]);
+      await recordAudit(req.session.user.id, req.ip, 'teachers.create', { id: result.insertId });
     }
-    res.json({ [_0x39fa.success]: true });
-  }
+    res.json({ [RESPONSE.success]: true });
+  },
 );
 
 router.get('/classes', ensureAuthenticated, allowContentAccess, async (req, res) => {
   const pool = getPool();
-  const [rows] = await pool.query(_0x53d7.classSelect);
+  const [rows] = await pool.query(QUERIES.classSelect);
   res.json(rows);
 });
 
@@ -437,30 +405,38 @@ router.post(
     const description = sanitizeRichText(payload.description || '');
     const title = sanitizePlainText(payload.title);
     const slugSanitized = sanitizePlainText(payload.slug);
-    const capacity = typeof payload.capacity === 'number' ? payload.capacity : null;
-    const active = payload.active === undefined ? 1 : (payload.active ? 1 : 0);
+    const capacity = typeof payload.capacity === 'number' ? payload.capacity : payload.capacity || null;
+    const active = payload.active === undefined ? 1 : payload.active ? 1 : 0;
+
     if (payload.id) {
-      const slugValue = slugSanitized || uuid();
-      await pool.query(
-        _0x53d7.classUpdate,
-        [title, slugValue, schedule, description, capacity, active, payload.id]
-      );
-      await recordAudit(req.session.user.id, req.ip, _0x4473('Y2xhc3Nlcy51cGRhdGU='), { id: payload.id });
+      await pool.query(QUERIES.classUpdate, [
+        title,
+        slugSanitized,
+        schedule,
+        description,
+        capacity,
+        active,
+        payload.id,
+      ]);
+      await recordAudit(req.session.user.id, req.ip, 'classes.update', { id: payload.id });
     } else {
-      const slugValue = slugSanitized || uuid();
-      const [result] = await pool.query(
-        _0x53d7.classInsert,
-        [title, slugValue, schedule, description, capacity, active]
-      );
-      await recordAudit(req.session.user.id, req.ip, _0x4473('Y2xhc3Nlcy5jcmVhdGU='), { id: result.insertId });
+      const [result] = await pool.query(QUERIES.classInsert, [
+        title,
+        slugSanitized,
+        schedule,
+        description,
+        capacity,
+        active,
+      ]);
+      await recordAudit(req.session.user.id, req.ip, 'classes.create', { id: result.insertId });
     }
-    res.json({ [_0x39fa.success]: true });
-  }
+    res.json({ [RESPONSE.success]: true });
+  },
 );
 
 router.get('/programs', ensureAuthenticated, allowContentAccess, async (req, res) => {
   const pool = getPool();
-  const [rows] = await pool.query(_0x53d7.programSelect);
+  const [rows] = await pool.query(QUERIES.programSelect);
   res.json(rows);
 });
 
@@ -476,27 +452,22 @@ router.post(
     const payload = req.body;
     const title = sanitizePlainText(payload.title);
     const description = sanitizeRichText(payload.description || '');
-    const visible = payload.visible === undefined ? 1 : (payload.visible ? 1 : 0);
+    const visible = payload.visible === undefined ? 1 : payload.visible ? 1 : 0;
+
     if (payload.id) {
-      await pool.query(
-        _0x53d7.programUpdate,
-        [title, description, visible, payload.id]
-      );
-      await recordAudit(req.session.user.id, req.ip, _0x4473('cHJvZ3JhbXMudXBkYXRl'), { id: payload.id });
+      await pool.query(QUERIES.programUpdate, [title, description, visible, payload.id]);
+      await recordAudit(req.session.user.id, req.ip, 'programs.update', { id: payload.id });
     } else {
-      const [result] = await pool.query(
-        _0x53d7.programInsert,
-        [title, description, visible]
-      );
-      await recordAudit(req.session.user.id, req.ip, _0x4473('cHJvZ3JhbXMuY3JlYXRl'), { id: result.insertId });
+      const [result] = await pool.query(QUERIES.programInsert, [title, description, visible]);
+      await recordAudit(req.session.user.id, req.ip, 'programs.create', { id: result.insertId });
     }
-    res.json({ [_0x39fa.success]: true });
-  }
+    res.json({ [RESPONSE.success]: true });
+  },
 );
 
 router.get('/articles', ensureAuthenticated, allowContentAccess, async (req, res) => {
   const pool = getPool();
-  const [rows] = await pool.query(_0x53d7.articleSelect);
+  const [rows] = await pool.query(QUERIES.articleSelect);
   res.json(rows);
 });
 
@@ -512,39 +483,52 @@ router.post(
     const payload = req.body;
     const slug = sanitizePlainText(payload.slug);
     const title = sanitizePlainText(payload.title);
-    const excerpt = sanitizePlainText(payload.excerpt) || null;
+    const excerpt = sanitizePlainText(payload.excerpt);
     const content = sanitizeRichText(payload.content || '');
     const readMoreUrl = payload.read_more_url ? payload.read_more_url.trim() : null;
     const publishedAt = payload.published_at || null;
     const tagsRaw = parseJson(payload.tags);
     const tags = Array.isArray(tagsRaw)
       ? tagsRaw
-        .filter(tag => typeof tag === 'string' && tag.trim())
-        .map(tag => sanitizePlainText(tag) || '')
-        .filter(Boolean)
+          .filter(tag => typeof tag === 'string' && tag.trim())
+          .map(tag => sanitizePlainText(tag) || '')
+          .filter(Boolean)
       : [];
+
     if (payload.id) {
       const slugValue = slug || uuid();
-      await pool.query(
-        _0x53d7.articleUpdate,
-        [slugValue, title, excerpt, content, readMoreUrl, publishedAt, JSON.stringify(tags), payload.id]
-      );
-      await recordAudit(req.session.user.id, req.ip, _0x4473('YXJ0aWNsZXMudXBkYXRl'), { id: payload.id });
+      await pool.query(QUERIES.articleUpdate, [
+        slugValue,
+        title,
+        excerpt,
+        content,
+        readMoreUrl,
+        publishedAt,
+        JSON.stringify(tags),
+        payload.id,
+      ]);
+      await recordAudit(req.session.user.id, req.ip, 'articles.update', { id: payload.id });
     } else {
       const slugValue = slug || uuid();
-      const [result] = await pool.query(
-        _0x53d7.articleInsert,
-        [slugValue, title, excerpt, content, readMoreUrl, req.session.user.id, publishedAt, JSON.stringify(tags)]
-      );
-      await recordAudit(req.session.user.id, req.ip, _0x4473('YXJ0aWNsZXMuY3JlYXRl'), { id: result.insertId });
+      const [result] = await pool.query(QUERIES.articleInsert, [
+        slugValue,
+        title,
+        excerpt,
+        content,
+        readMoreUrl,
+        req.session.user.id,
+        publishedAt,
+        JSON.stringify(tags),
+      ]);
+      await recordAudit(req.session.user.id, req.ip, 'articles.create', { id: result.insertId });
     }
-    res.json({ [_0x39fa.success]: true });
-  }
+    res.json({ [RESPONSE.success]: true });
+  },
 );
 
 router.get('/files', ensureAuthenticated, allowContentAccess, async (req, res) => {
   const pool = getPool();
-  const [rows] = await pool.query(_0x53d7.fileSelect);
+  const [rows] = await pool.query(QUERIES.fileSelect);
   res.json(rows);
 });
 
@@ -556,28 +540,31 @@ router.post(
   upload.single('file'),
   async (req, res) => {
     if (!req.file) {
-      return res.status(400).json({ [_0x39fa.error]: _0x39fa.fileRequired });
+      return res.status(400).json({ [RESPONSE.error]: STATUS.fileRequired });
     }
-    // Placeholder for AV scanning hook.
+
     const pool = getPool();
     const originalName = sanitizePlainText(req.file.originalname) || req.file.originalname;
     const relativePath = path.relative(path.resolve(__dirname, '..', '..'), req.file.path).replace(/\\/g, '/');
-    const [result] = await pool.query(
-      _0x53d7.fileInsert,
-      [originalName, relativePath, req.file.mimetype, req.file.size, req.session.user.id]
-    );
-    await recordAudit(req.session.user.id, req.ip, _0x4473('ZmlsZXMudXBsb2Fk'), { id: result.insertId, filename: originalName });
+    const [result] = await pool.query(QUERIES.fileInsert, [
+      originalName,
+      relativePath,
+      req.file.mimetype,
+      req.file.size,
+      req.session.user.id,
+    ]);
+    await recordAudit(req.session.user.id, req.ip, 'files.upload', { id: result.insertId, filename: originalName });
     res.json({
-      [_0x39fa.success]: true,
+      [RESPONSE.success]: true,
       file: {
         id: result.insertId,
         filename: originalName,
         path: relativePath,
         mime: req.file.mimetype,
-        size: req.file.size
-      }
+        size: req.file.size,
+      },
     });
-  }
+  },
 );
 
 router.post(
@@ -592,17 +579,17 @@ router.post(
     const firstToken = statement.split(/\s+/)[0].toLowerCase();
     const allowed = ['select', 'show', 'describe', 'explain'];
     if (!allowed.includes(firstToken)) {
-      return res.status(400).json({ [_0x39fa.error]: _0x39fa.statementNotAllowed });
+      return res.status(400).json({ [RESPONSE.error]: STATUS.statementNotAllowed });
     }
     try {
       const pool = getPool();
       const [rows] = await pool.query(statement);
-      await recordAudit(req.session.user.id, req.ip, _0x4473('c3FsLnJ1bg=='), { statement: firstToken });
+      await recordAudit(req.session.user.id, req.ip, 'sql.run', { statement: firstToken });
       res.json({ rows });
     } catch (error) {
-      res.status(400).json({ [_0x39fa.error]: _0x39fa.queryFailed, message: error.message });
+      res.status(400).json({ [RESPONSE.error]: STATUS.queryFailed, message: error.message });
     }
-  }
+  },
 );
 
 module.exports = router;

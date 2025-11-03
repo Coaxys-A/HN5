@@ -1,6 +1,6 @@
 # Secure Environment Setup
 
-The backend loads sensitive values from a file named `.env.secure` before evaluating runtime defaults. The loader lives in `src/obfuscation/runtime.js` and accepts Base64-wrapped secrets using the `ENC(...)` convention.
+The backend loads sensitive values from a file named `.env.secure` before evaluating runtime defaults. The loader now resides in `src/config.js` and reads plain `KEY=VALUE` pairs. Base64 wrapping is optional and only needed if you prefer encoding.
 
 ## File location
 
@@ -13,7 +13,7 @@ Place `.env.secure` *outside* the public web root and repository tree. For local
 
 ## File format
 
-Each non-comment line must contain `KEY=VALUE`. To hide the raw value, wrap it in `ENC()` and Base64-encode the plaintext.
+Each non-comment line must contain `KEY=VALUE`. Values may be stored as plain text or wrapped in `ENC()` if you want to Base64-encode them for operational consistency.
 
 ```
 # Example .env.secure
@@ -32,7 +32,7 @@ Use OpenSSL or any Base64 tool to wrap secrets:
 echo -n 'super-secret-value' | openssl base64
 ```
 
-Paste the Base64 output inside `ENC(...)`.
+Paste the Base64 output inside `ENC(...)` if you choose to encode the value; otherwise store the plaintext directly.
 
 ## Rotation checklist
 
@@ -41,4 +41,4 @@ Paste the Base64 output inside `ENC(...)`.
 3. Restart the Node.js service – the loader rehydrates values at boot.
 4. Verify integrity by calling `/admin/login` with a valid credential.
 
-The checksum gate in `src/server.js` ensures tampering with critical server files is detected on startup, so update `.env.secure` without modifying those files.
+After updating `.env.secure`, restart the Node.js service so the refreshed variables are loaded on boot.

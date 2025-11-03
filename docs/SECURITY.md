@@ -8,8 +8,8 @@
 - All SQL interactions use parameterized queries to mitigate injection risks, and the admin raw SQL runner limits execution to read-only statements with CSRF + role verification.
 - Audit logging records user actions, IP addresses (INET6), and payload metadata.
 - Admin payloads validated with `express-validator`, sanitized via `sanitize-html`, and file uploads constrained to 10MB with an antivirus hook placeholder for future integration.
-- Runtime protections include anti-debugger detection, hostname domain locking for `/admin`, and startup checksum verification for `src/server.js` and `src/admin/routes.js`.
-- Sensitive environment variables load from `.env.secure` via the obfuscation runtime with Base64-wrapped values, keeping secrets outside the repository.
+- Runtime protections rely on standard Express hardening (helmet, compression) while keeping the admin router unrestricted by domain locks; integrity monitoring can be added later if required.
+- Sensitive environment variables load from `.env.secure`, keeping secrets outside the repository without additional obfuscation.
 
 ## Authentication
 - Password hashes generated with bcrypt using cost defined by `DEFAULT_BCRYPT_COST`.
@@ -19,5 +19,5 @@
 ## Operational practices
 - Docker Compose provides isolated MySQL and Redis services for local testing.
 - `.gitignore` prevents committing secrets, `admin-secrets.txt`, node modules, and build output.
-- CI workflow runs lint/test/build/obfuscation to detect regressions before deployment.
+- CI workflow runs lint/test/build to detect regressions before deployment.
 - `docs/IMPLEMENTATION.md` documents configuration flags so operators can disable backlinks or adjust security posture prior to release.
