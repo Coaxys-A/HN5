@@ -24,5 +24,6 @@
 - Review CI workflow once additional tests beyond linting are available.
 
 ## Visual sanity checklist
-- No new front-end templates modified in this pass; previously delivered RTL/UI updates remain untouched.
+- Updated `contact.html` footer to remove email subscription field in favor of messaging platform links per brief.
+- Adjusted `css/wm_overrides.20240605.css` to drop unused email field overrides and style the new contact links.
 - Spot-checked static pages (index/about/blog/contact) to confirm existing layout loads without referencing removed assets.
