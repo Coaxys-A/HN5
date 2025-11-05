@@ -43,7 +43,7 @@ async function resetAttempts(username, ip) {
 
 async function login(credentials, req) {
   const { username, password } = credentials;
-  const ip = req.ip;
+  const { ip } = req;
   await registerLoginAttempt(ip, username);
   const user = await fetchUserByUsername(username);
   if (!user) {
@@ -66,7 +66,7 @@ async function login(credentials, req) {
 
 function logout(req) {
   return new Promise((resolve, reject) => {
-    req.session.destroy(err => {
+    req.session.destroy((err) => {
       if (err) reject(err);
       else resolve();
     });
@@ -96,7 +96,12 @@ function requireRole(roles) {
 
 async function recordAudit(userId, ip, action, details) {
   const pool = getPool();
-  await pool.query(QUERIES.insertAudit, [userId || null, ip || null, action, JSON.stringify(details || {})]);
+  await pool.query(QUERIES.insertAudit, [
+    userId || null,
+    ip || null,
+    action,
+    JSON.stringify(details || {}),
+  ]);
 }
 
 module.exports = {

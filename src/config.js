@@ -20,7 +20,7 @@ const DEFAULTS = {
   PANEL_DOMAIN_SIGNATURE: process.env.PANEL_DOMAIN_SIGNATURE || 'panel.nofdoet.ir',
   ALLOW_DEBUG_HOSTS: (process.env.ALLOW_DEBUG_HOSTS || '')
     .split(',')
-    .map(value => value.trim())
+    .map((value) => value.trim())
     .filter(Boolean),
 };
 

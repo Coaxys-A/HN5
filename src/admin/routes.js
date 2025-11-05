@@ -12,7 +12,9 @@ const { body, validationResult, query } = require('express-validator');
 const { v4: uuid } = require('uuid');
 const { getPool } = require('../db');
 const config = require('../config');
-const { login, logout, ensureAuthenticated, recordAudit, requireRole } = require('./auth');
+const {
+  login, logout, ensureAuthenticated, recordAudit, requireRole,
+} = require('./auth');
 
 const router = express.Router();
 const csrfProtection = csrf({ cookie: false });
@@ -112,6 +114,14 @@ function parseJson(value) {
   } catch (error) {
     return null;
   }
+}
+
+function toNumber(value, defaultValue = 0) {
+  if (value === undefined || value === null || value === '') {
+    return defaultValue;
+  }
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? defaultValue : parsed;
 }
 
 function createSessionMiddleware() {
@@ -227,7 +237,7 @@ const staffValidators = [
   body('bio_short').optional({ checkFalsy: true }).isLength({ max: 2000 }),
   body('bio_long').optional({ checkFalsy: true }).isString(),
   body('photo_path').optional({ checkFalsy: true }).trim().isLength({ max: 1024 }),
-  body('social').optional().custom(value => {
+  body('social').optional().custom((value) => {
     if (typeof value === 'string') {
       JSON.parse(value);
       return true;
@@ -252,7 +262,7 @@ const classValidators = [
   body('id').optional().isInt({ min: 1 }).toInt(),
   body('title').trim().notEmpty().isLength({ max: 255 }),
   body('slug').optional({ checkFalsy: true }).trim().isLength({ max: 255 }),
-  body('schedule').optional().custom(value => {
+  body('schedule').optional().custom((value) => {
     if (typeof value === 'string') {
       JSON.parse(value);
       return true;
@@ -280,7 +290,7 @@ const articleValidators = [
   body('content').optional({ checkFalsy: true }).isString(),
   body('read_more_url').optional({ checkFalsy: true }).isURL({ protocols: ['http', 'https'], require_protocol: true }),
   body('published_at').optional({ checkFalsy: true }).isISO8601(),
-  body('tags').optional().custom(value => {
+  body('tags').optional().custom((value) => {
     if (typeof value === 'string') {
       JSON.parse(value);
       return true;
@@ -310,16 +320,16 @@ router.post(
     const socialRaw = parseJson(payload.social);
     const social = Array.isArray(socialRaw)
       ? socialRaw
-          .filter(item => typeof item === 'string' && item.trim())
-          .map(item => sanitizePlainText(item) || '')
-          .filter(Boolean)
+        .filter((item) => typeof item === 'string' && item.trim())
+        .map((item) => sanitizePlainText(item) || '')
+        .filter(Boolean)
       : [];
     const bioShort = sanitizePlainText(payload.bio_short);
     const bioLong = sanitizeRichText(payload.bio_long || '');
     const name = sanitizePlainText(payload.name);
     const title = sanitizePlainText(payload.title);
     const photoPath = sanitizePlainText(payload.photo_path);
-    const sortOrder = typeof payload.sort_order === 'number' ? payload.sort_order : payload.sort_order || 0;
+    const sortOrder = toNumber(payload.sort_order);
 
     if (id) {
       await pool.query(QUERIES.staffUpdate, [
@@ -370,14 +380,29 @@ router.post(
     const subject = sanitizePlainText(payload.subject);
     const bio = sanitizeRichText(payload.bio || '');
     const photoPath = sanitizePlainText(payload.photo_path);
-    const sortOrder = typeof payload.sort_order === 'number' ? payload.sort_order : payload.sort_order || 0;
-    const active = payload.active === undefined ? 1 : payload.active ? 1 : 0;
+    const sortOrder = toNumber(payload.sort_order);
+    const active = payload.active === undefined ? 1 : Number(Boolean(payload.active));
 
     if (id) {
-      await pool.query(QUERIES.teacherUpdate, [name, subject, bio, photoPath, sortOrder, active, id]);
+      await pool.query(QUERIES.teacherUpdate, [
+        name,
+        subject,
+        bio,
+        photoPath,
+        sortOrder,
+        active,
+        id,
+      ]);
       await recordAudit(req.session.user.id, req.ip, 'teachers.update', { id });
     } else {
-      const [result] = await pool.query(QUERIES.teacherInsert, [name, subject, bio, photoPath, sortOrder, active]);
+      const [result] = await pool.query(QUERIES.teacherInsert, [
+        name,
+        subject,
+        bio,
+        photoPath,
+        sortOrder,
+        active,
+      ]);
       await recordAudit(req.session.user.id, req.ip, 'teachers.create', { id: result.insertId });
     }
     res.json({ [RESPONSE.success]: true });
@@ -405,8 +430,11 @@ router.post(
     const description = sanitizeRichText(payload.description || '');
     const title = sanitizePlainText(payload.title);
     const slugSanitized = sanitizePlainText(payload.slug);
-    const capacity = typeof payload.capacity === 'number' ? payload.capacity : payload.capacity || null;
-    const active = payload.active === undefined ? 1 : payload.active ? 1 : 0;
+    let capacity = null;
+    if (payload.capacity !== undefined && payload.capacity !== null && payload.capacity !== '') {
+      capacity = toNumber(payload.capacity, null);
+    }
+    const active = payload.active === undefined ? 1 : Number(Boolean(payload.active));
 
     if (payload.id) {
       await pool.query(QUERIES.classUpdate, [
@@ -452,7 +480,7 @@ router.post(
     const payload = req.body;
     const title = sanitizePlainText(payload.title);
     const description = sanitizeRichText(payload.description || '');
-    const visible = payload.visible === undefined ? 1 : payload.visible ? 1 : 0;
+    const visible = payload.visible === undefined ? 1 : Number(Boolean(payload.visible));
 
     if (payload.id) {
       await pool.query(QUERIES.programUpdate, [title, description, visible, payload.id]);
@@ -490,9 +518,9 @@ router.post(
     const tagsRaw = parseJson(payload.tags);
     const tags = Array.isArray(tagsRaw)
       ? tagsRaw
-          .filter(tag => typeof tag === 'string' && tag.trim())
-          .map(tag => sanitizePlainText(tag) || '')
-          .filter(Boolean)
+        .filter((tag) => typeof tag === 'string' && tag.trim())
+        .map((tag) => sanitizePlainText(tag) || '')
+        .filter(Boolean)
       : [];
 
     if (payload.id) {
@@ -554,7 +582,7 @@ router.post(
       req.session.user.id,
     ]);
     await recordAudit(req.session.user.id, req.ip, 'files.upload', { id: result.insertId, filename: originalName });
-    res.json({
+    return res.json({
       [RESPONSE.success]: true,
       file: {
         id: result.insertId,
@@ -585,9 +613,9 @@ router.post(
       const pool = getPool();
       const [rows] = await pool.query(statement);
       await recordAudit(req.session.user.id, req.ip, 'sql.run', { statement: firstToken });
-      res.json({ rows });
+      return res.json({ rows });
     } catch (error) {
-      res.status(400).json({ [RESPONSE.error]: STATUS.queryFailed, message: error.message });
+      return res.status(400).json({ [RESPONSE.error]: STATUS.queryFailed, message: error.message });
     }
   },
 );

@@ -142,6 +142,10 @@ body {
   text-decoration: underline;
 }
 
+.contact-form .form-group.email-group {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
