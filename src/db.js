@@ -10,5 +10,5 @@ function getPool() {
 }
 
 module.exports = {
-  getPool
+  getPool,
 };

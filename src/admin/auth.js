@@ -6,19 +6,33 @@ const config = require('../config');
 const loginLimiter = new RateLimiterMemory({ points: 5, duration: 900 });
 const blockLimiter = new RateLimiterMemory({ points: 10, duration: 900 });
 
+const QUERIES = {
+  userByUsername:
+    'SELECT users.*, roles.name AS role_name FROM users JOIN roles ON roles.id = users.role_id WHERE username = ?',
+  insertAudit: 'INSERT INTO audit_logs (user_id, ip, action, details) VALUES (?, INET6_ATON(?), ?, ?)',
+};
+
+const ERROR_CODES = {
+  tooManyAttempts: 'too_many_attempts',
+  accountLocked: 'account_locked',
+  invalidCredentials: 'invalid_credentials',
+  authenticationRequired: 'authentication_required',
+  forbidden: 'forbidden',
+};
+
 async function fetchUserByUsername(username) {
   const pool = getPool();
-  const [rows] = await pool.query('SELECT users.*, roles.name AS role_name FROM users JOIN roles ON roles.id = users.role_id WHERE username = ?', [username]);
+  const [rows] = await pool.query(QUERIES.userByUsername, [username]);
   return rows[0];
 }
 
 async function registerLoginAttempt(ip, username) {
   const key = `${ip}:${username}`;
   await loginLimiter.consume(key).catch(() => {
-    throw new Error('too_many_attempts');
+    throw new Error(ERROR_CODES.tooManyAttempts);
   });
   await blockLimiter.consume(username).catch(() => {
-    throw new Error('account_locked');
+    throw new Error(ERROR_CODES.accountLocked);
   });
 }
 
@@ -27,16 +41,17 @@ async function resetAttempts(username, ip) {
   await blockLimiter.delete(username);
 }
 
-async function login({ username, password }, req) {
-  const ip = req.ip;
+async function login(credentials, req) {
+  const { username, password } = credentials;
+  const { ip } = req;
   await registerLoginAttempt(ip, username);
   const user = await fetchUserByUsername(username);
   if (!user) {
-    throw new Error('invalid_credentials');
+    throw new Error(ERROR_CODES.invalidCredentials);
   }
   const match = await bcrypt.compare(password, user.password_hash);
   if (!match) {
-    throw new Error('invalid_credentials');
+    throw new Error(ERROR_CODES.invalidCredentials);
   }
   await resetAttempts(username, ip);
   req.session.user = {
@@ -44,14 +59,14 @@ async function login({ username, password }, req) {
     username: user.username,
     display_name: user.display_name,
     role_id: user.role_id,
-    role: user.role_name
+    role: user.role_name,
   };
   return req.session.user;
 }
 
 function logout(req) {
   return new Promise((resolve, reject) => {
-    req.session.destroy(err => {
+    req.session.destroy((err) => {
       if (err) reject(err);
       else resolve();
     });
@@ -63,17 +78,17 @@ function ensureAuthenticated(req, res, next) {
     res.locals.currentUser = req.session.user;
     return next();
   }
-  return res.status(401).json({ error: 'authentication_required' });
+  return res.status(401).json({ error: ERROR_CODES.authenticationRequired });
 }
 
 function requireRole(roles) {
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
   return (req, res, next) => {
     if (!req.session || !req.session.user) {
-      return res.status(401).json({ error: 'authentication_required' });
+      return res.status(401).json({ error: ERROR_CODES.authenticationRequired });
     }
-    const allowed = Array.isArray(roles) ? roles : [roles];
-    if (!allowed.includes(req.session.user.role)) {
-      return res.status(403).json({ error: 'forbidden' });
+    if (!allowedRoles.includes(req.session.user.role)) {
+      return res.status(403).json({ error: ERROR_CODES.forbidden });
     }
     return next();
   };
@@ -81,10 +96,12 @@ function requireRole(roles) {
 
 async function recordAudit(userId, ip, action, details) {
   const pool = getPool();
-  await pool.query(
-    'INSERT INTO audit_logs (user_id, ip, action, details) VALUES (?, INET6_ATON(?), ?, ?)',
-    [userId || null, ip || null, action, JSON.stringify(details || {})]
-  );
+  await pool.query(QUERIES.insertAudit, [
+    userId || null,
+    ip || null,
+    action,
+    JSON.stringify(details || {}),
+  ]);
 }
 
 module.exports = {
@@ -93,5 +110,5 @@ module.exports = {
   ensureAuthenticated,
   requireRole,
   recordAudit,
-  config
+  config,
 };

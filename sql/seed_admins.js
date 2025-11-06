@@ -12,7 +12,7 @@ async function seed() {
   try {
     await conn.query("INSERT IGNORE INTO roles (name, permissions) VALUES ('absolute_developer', JSON_ARRAY()), ('school_team', JSON_ARRAY()), ('developer_team', JSON_ARRAY())");
     const [rows] = await conn.query('SELECT id, name FROM roles');
-    const roles = Object.fromEntries(rows.map(r => [r.name, r.id]));
+    const roles = Object.fromEntries(rows.map((role) => [role.name, role.id]));
 
     const devPass = process.env.DEV_ADMIN_PASS;
     let adminPassword;
@@ -27,18 +27,18 @@ async function seed() {
     const adminHash = await bcrypt.hash(adminPassword, BCRYPT_COST);
     await conn.query(
       'INSERT INTO users (username, display_name, password_hash, role_id) VALUES (?, ?, ?, ?)\n       ON DUPLICATE KEY UPDATE display_name = VALUES(display_name), role_id = VALUES(role_id)',
-      ['Coaxys', 'آرسام صباغ', adminHash, roles['absolute_developer']]
+      ['Coaxys', 'آرسام صباغ', adminHash, roles.absolute_developer],
     );
 
-    async function createUser(username, displayName, roleKey) {
+    const createUser = async (username, displayName, roleKey) => {
       const password = crypto.randomBytes(10).toString('base64').replace(/[^a-zA-Z0-9]/g, 'B').slice(0, 16);
       const hash = await bcrypt.hash(password, BCRYPT_COST);
       await conn.query(
         'INSERT INTO users (username, display_name, password_hash, role_id) VALUES (?, ?, ?, ?)\n         ON DUPLICATE KEY UPDATE display_name = VALUES(display_name), role_id = VALUES(role_id)',
-        [username, displayName, hash, roles[roleKey]]
+        [username, displayName, hash, roles[roleKey]],
       );
       console.log(`${username} password (development only, rotate immediately):`, password);
-    }
+    };
 
     await createUser('school_team_1', 'School Team User', 'school_team');
     await createUser('dev_team_1', 'Developer Team User', 'developer_team');
@@ -48,7 +48,7 @@ async function seed() {
   }
 }
 
-seed().catch(err => {
+seed().catch((err) => {
   console.error(err);
   process.exitCode = 1;
 });
