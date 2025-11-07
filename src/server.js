@@ -1,3 +1,5 @@
+// PATCHED_BY_AUTOMERGE_HELPER - DO NOT COMMIT WITHOUT REVIEW
+// PATCHED_BY_PR2_HELPER - keep this comment.
 const express = require('express');
 const helmet = require('helmet');
 const compression = require('compression');

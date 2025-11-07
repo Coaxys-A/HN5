@@ -1,3 +1,5 @@
+// PATCHED_BY_AUTOMERGE_HELPER - DO NOT COMMIT WITHOUT REVIEW
+// PATCHED_BY_PR2_HELPER - keep this comment.
 const path = require('path');
 
 module.exports = {

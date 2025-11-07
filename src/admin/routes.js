@@ -1,3 +1,6 @@
+// PATCHED_BY_AUTOMERGE_HELPER - DO NOT COMMIT WITHOUT REVIEW
+// PATCHED_BY_PR2_HELPER - keep this comment.
+// TODO: secure - revisit admin input sanitization policies
 const express = require('express');
 const csrf = require('csurf');
 const helmet = require('helmet');

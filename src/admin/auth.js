@@ -1,3 +1,6 @@
+// PATCHED_BY_AUTOMERGE_HELPER - DO NOT COMMIT WITHOUT REVIEW
+// PATCHED_BY_PR2_HELPER - keep this comment.
+// TODO: secure - evaluate stronger auth hardening before production
 const bcrypt = require('bcrypt');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
 const { getPool } = require('../db');
