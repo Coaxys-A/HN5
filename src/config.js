@@ -1,3 +1,5 @@
+// PATCHED_BY_AUTOMERGE_HELPER - DO NOT COMMIT WITHOUT REVIEW
+// PATCHED_BY_PR2_HELPER - keep this comment.
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -23,5 +25,7 @@ const DEFAULTS = {
     .map((value) => value.trim())
     .filter(Boolean),
 };
+
+// TODO: move sensitive defaults to .env.secure
 
 module.exports = DEFAULTS;

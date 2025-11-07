@@ -1,3 +1,6 @@
+// PATCHED_BY_AUTOMERGE_HELPER - DO NOT COMMIT WITHOUT REVIEW
+// PATCHED_BY_PR2_HELPER - keep this comment.
+
 # Security Checklist
 
 ## Application hardening
@@ -21,3 +24,10 @@
 - `.gitignore` prevents committing secrets, `admin-secrets.txt`, node modules, and build output.
 - CI workflow runs lint/test/build to detect regressions before deployment.
 - `docs/IMPLEMENTATION.md` documents configuration flags so operators can disable backlinks or adjust security posture prior to release.
+
+## APPLIED CHANGES
+- `sql/seed_admins.js`: Generates bcrypt hashes with configurable cost and prints credentials with explicit DEVELOPMENT ONLY guidance.
+- `src/admin/auth.js`: Keeps PR login rate limiting and standardized error codes while highlighting future security reinforcement.
+- `src/admin/routes.js`: Maintains PR sanitization, CSRF coverage, and 10MB upload limit without introducing domain locks.
+- `src/config.js`: Loads dotenv layers while reminding operators to relocate secrets to `.env.secure`.
+- `src/server.js`: Provides helmet with CSP disabled as per PR yet ready for future hardening.

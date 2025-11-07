@@ -1,3 +1,6 @@
+// PATCHED_BY_AUTOMERGE_HELPER - DO NOT COMMIT WITHOUT REVIEW
+// PATCHED_BY_PR2_HELPER - keep this comment.
+
 # Implementation Notes
 
 ## Front-end changes
@@ -29,3 +32,13 @@
 ## Flags & configuration
 - `src/config.js` surfaces runtime flags mirroring operator controls (hidden backlinks, bcrypt cost, 2FA placeholder, etc.).
 - `.gitignore` updated to avoid committing build artifacts, dependencies, and secrets.
+
+## APPLIED CHANGES
+- `sql/seed_admins.js`: Adopted PR role seeding with config-aware bcrypt cost and development-only password logging.
+- `src/admin/auth.js`: Retained PR error code map, parameterized SQL, and rate limiting while flagging future security tasks.
+- `src/admin/routes.js`: Preserved PR query maps, CSRF/helmet wiring, and upload limits; domain locking remains disabled per base logic.
+- `src/config.js`: Merged PR feature flags with base defaults and noted TODO for relocating secrets.
+- `src/db.js`: Kept simple pool factory and documented need to rotate DSN outside development.
+- `src/server.js`: Ensured PR middleware stack with Express error handling returning JSON.
+- `webpack.prod.js`: Retained PR build pipeline without obfuscation hooks.
+- `css/wm_overrides.20240605.css`: Applied PR visual overrides hiding the blue topbar and feature boxes per request.
