@@ -5,7 +5,7 @@
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2/promise');
 const crypto = require('crypto');
-const config = require('../src/config');
+const config = require('../backend/config');
 
 const BCRYPT_COST = parseInt(process.env.BCRYPT_COST || String(config.DEFAULT_BCRYPT_COST), 10);
 
