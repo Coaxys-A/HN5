@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
       - name: Install dependencies
         run: npm install
@@ -24,8 +24,8 @@ jobs:
         run: npm test
       - name: Build assets
         run: npm run build
-      - name: Archive dist
+      - name: Archive build output
         uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: dist/
+          name: next-build
+          path: .next

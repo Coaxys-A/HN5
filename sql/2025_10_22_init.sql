@@ -74,6 +74,7 @@ CREATE TABLE classes (
   description TEXT,
   capacity INT DEFAULT NULL,
   active TINYINT(1) DEFAULT 1,
+  status VARCHAR(32) NOT NULL DEFAULT 'visible',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -82,6 +83,7 @@ CREATE TABLE programs (
   title VARCHAR(255) NOT NULL,
   description TEXT,
   visible TINYINT(1) DEFAULT 1,
+  status VARCHAR(32) NOT NULL DEFAULT 'visible',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -95,6 +97,7 @@ CREATE TABLE articles (
   author_id BIGINT NULL,
   published_at TIMESTAMP NULL,
   tags JSON DEFAULT '[]',
+  status VARCHAR(32) NOT NULL DEFAULT 'visible',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL
 );
@@ -113,4 +116,14 @@ CREATE TABLE files (
 CREATE TABLE settings (
   `key` VARCHAR(255) PRIMARY KEY,
   `value` JSON
+);
+
+CREATE TABLE IF NOT EXISTS user_totp_secrets (
+  user_id BIGINT PRIMARY KEY,
+  secret VARCHAR(255) NOT NULL DEFAULT '',
+  pending_secret VARCHAR(255) NULL,
+  verified_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_user_totp_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

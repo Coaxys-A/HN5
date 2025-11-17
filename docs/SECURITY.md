@@ -1,33 +1,22 @@
-// PATCHED_BY_AUTOMERGE_HELPER - DO NOT COMMIT WITHOUT REVIEW
-// PATCHED_BY_PR2_HELPER - keep this comment.
-
 # Security Checklist
 
 ## Application hardening
-- HTTP security headers enforced via Helmet (CSP, HSTS in production, XSS protections).
-- Sessions stored via `express-session` with Secure, HttpOnly, SameSite=Strict cookies and Redis backing when configured.
-- Login attempts rate-limited (5 attempts per 15 minutes per IP) with account lock after repeated failures.
-- CSRF protection applied to state-changing admin routes using `csurf` tokens.
-- All SQL interactions use parameterized queries to mitigate injection risks, and the admin raw SQL runner limits execution to read-only statements with CSRF + role verification.
-- Audit logging records user actions, IP addresses (INET6), and payload metadata.
-- Admin payloads validated with `express-validator`, sanitized via `sanitize-html`, and file uploads constrained to 10MB with an antivirus hook placeholder for future integration.
-- Runtime protections rely on standard Express hardening (helmet, compression) while keeping the admin router unrestricted by domain locks; integrity monitoring can be added later if required.
-- Sensitive environment variables load from `.env.secure`, keeping secrets outside the repository without additional obfuscation.
+- Express stack (`server.js` + `backend/admin/routes.js`) applies Helmet, disables `x-powered-by`, and enforces gzip/JSON body parsing ahead of any router logic.
+- Sessions rely on `express-session` cookies with HttpOnly + SameSite=Strict plus Redis persistence whenever `REDIS_URL` is provided.
+- Login, audit, and CRUD endpoints use CSRF tokens from `csurf`, input validation via `express-validator`, and sanitization helpers (`sanitizePlainText`, `sanitizeRichText`).
+- Rate limiting in `backend/admin/auth.js` applies both IP+username (5 attempts/15 min) and username-only locks to stop brute force attempts.
+- MySQL queries are parameterized; the raw SQL runner rejects non-read operations and everything is logged to `audit_logs`.
+- File uploads are capped at 10MB and flow through `scanUploadedFile()` so an antivirus connector can be wired in without changing endpoint code.
+- Content entities (classes, programs, articles) now expose an explicit `status` column (`visible`, `incoming`, `coming_soon`, `preparing`, `hidden`) to ensure unpublished material never leaks through the public API.
+- `.env.secure` is loaded before `.env`, with production boot failing if `MYSQL_DSN` or `SESSION_SECRET` are unsafe defaults.
 
-## Authentication
-- Password hashes generated with bcrypt using cost defined by `DEFAULT_BCRYPT_COST`.
-- Optional 2FA placeholder toggled through environment (`ENABLE_2FA_PLACEHOLDER`).
-- Seed script avoids storing plaintext passwords unless explicitly allowed via flag.
+## Authentication & authorization
+- Password hashing uses bcrypt with the operator-defined `DEFAULT_BCRYPT_COST`.
+- Session payloads store `{ id, username, display_name, role }`, and `requireRole()` checks human-readable role names (`absolute_developer`, `school_team`, `developer_team`).
+- Optional TOTP 2FA (enabled via `ENABLE_2FA=true`) is enforced for `absolute_developer` once enrolled. `/admin/2fa/setup` provisions a QR code backed by `speakeasy` secrets stored in `user_totp_secrets`, and `/admin/2fa/verify` activates the secret. Login rejects invalid/missing tokens with `two_factor_required` / `invalid_two_factor` codes.
+- Seed script refuses to run in production without `DEV_ADMIN_PASS`, guaranteeing deliberate credential rotation; dev-mode passwords are prefixed with “DEVELOPMENT ONLY”.
 
 ## Operational practices
-- Docker Compose provides isolated MySQL and Redis services for local testing.
-- `.gitignore` prevents committing secrets, `admin-secrets.txt`, node modules, and build output.
-- CI workflow runs lint/test/build to detect regressions before deployment.
-- `docs/IMPLEMENTATION.md` documents configuration flags so operators can disable backlinks or adjust security posture prior to release.
-
-## APPLIED CHANGES
-- `sql/seed_admins.js`: Generates bcrypt hashes with configurable cost and prints credentials with explicit DEVELOPMENT ONLY guidance.
-- `src/admin/auth.js`: Keeps PR login rate limiting and standardized error codes while highlighting future security reinforcement.
-- `src/admin/routes.js`: Maintains PR sanitization, CSRF coverage, and 10MB upload limit without introducing domain locks.
-- `src/config.js`: Loads dotenv layers while reminding operators to relocate secrets to `.env.secure`.
-- `src/server.js`: Provides helmet with CSP disabled as per PR yet ready for future hardening.
+- `backend/db.js` validates connectivity at startup (`ensureDatabaseConnection()`) and exposes the same check for `/healthz` responses.
+- `.github/workflows/ci.yml` builds/lints with Node 22 to match the shared-host runtime.
+- `docs/DEPLOYMENT_SHARED_HOSTING.md` captures the exact cPanel steps (environment variables, build commands, startup file) so production runs mirror the validated configuration.

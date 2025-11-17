@@ -1,44 +1,22 @@
-// PATCHED_BY_AUTOMERGE_HELPER - DO NOT COMMIT WITHOUT REVIEW
-// PATCHED_BY_PR2_HELPER - keep this comment.
-
 # Implementation Notes
 
-## Front-end changes
-- Global RTL overrides and interactive header button states defined in `css/wm_overrides.20240605.css` and loaded on all pages.
-- Landing page (`index.html`) updated to remove deprecated sections, add new "پرسنل مدرسه" and "دبیران مدرسه" grids, rework classes, activities, and enrichment programs, and rename the magazine section to "رصد" with Teknav backlinks.
-- Contact form simplified to phone-based communication and email field removed per requirements.
-- About page refreshed with developer cards including Arsam Sabbagh (Coaxys) and two placeholders with visible backlinks.
-- Blog listing and article pages now surface "بیشتر بخوانید" buttons to Teknav and embed hidden backlinks when flags enable them.
-- JavaScript fallback logic (`js/main.js`) ensures broken images degrade gracefully.
+## Front-end
+- Public site now lives under the Next.js pages router (`pages/`), sharing RTL global styles via `styles/global.css` and layout components in `components/`.
+- Static assets migrated into `public/` so cPanel/Next can serve fonts, uploads, and hero imagery without Apache rules.
+- Shared Teknav backlinks & hidden-link toggles read from `lib/settings.js`, which in turn respects `INCLUDE_HIDDEN_BACKLINKS` / `NEXT_PUBLIC_INCLUDE_HIDDEN_BACKLINKS`.
+- Mock data modules (`data/*.js`) backfill teachers, courses, activities, and blog content until the admin API is wired directly into the pages.
 
-## Backend & admin scaffold
-- Node.js/Express service configured in `src/server.js` with security headers, compression, and `/admin` router.
-- Admin router (`src/admin/routes.js`) offers CRUD endpoints for staff, teachers, classes, programs, and articles with CSRF protection, granular role guards, and audit logging.
-- Admin router (`src/admin/routes.js`) now stores readable SQL strings, removes legacy hostname locking, and records audits with descriptive action identifiers.
-- File manager endpoints provide secure uploads (10MB cap) into `uploads/`, persist metadata to MySQL, and log all actions.
-- Audit viewer (`GET /admin/audit`) supports filtering by user and action; `POST /admin/sql/run` allows read-only SQL operations for super-admins with full auditing.
-- Authentication utilities (`src/admin/auth.js`) implement bcrypt-based login, rate limiting, and session management using Redis when available.
-- MySQL schema defined in `sql/2025_10_22_init.sql`; seed script `sql/seed_admins.js` provisions default roles and users.
+## Backend & admin stack
+- Express server bootstraps Next inside `server.js`, then mounts `backend/admin/routes.js` and `backend/api/public.js` before delegating everything else to Next.
+- Environment handling lives in `backend/config.js` and enforces `.env.secure` precedence plus production guards for `MYSQL_DSN` + `SESSION_SECRET`.
+- Database pool (`backend/db.js`) exposes `ensureDatabaseConnection()` so both the startup path and `/healthz` can report readiness.
+- Admin router manages CRUD for staff, teachers, classes, programs, articles, and files. Validators + sanitizers normalize payloads, and `scanUploadedFile()` is the hook for antivirus scanners.
+- Content tables now include a `status` column with shared helpers to keep “incoming/coming soon/preparing” flows consistent between admin, API, and public site.
+- TOTP 2FA is implemented with `speakeasy`/`qrcode`; setup + verification endpoints live under `/admin/2fa/*` and secrets persist in `user_totp_secrets`.
+- Public API groups programs/articles by status so the Next.js front-end can render “in preparation” vs “visible” cards without extra queries.
 
 ## Tooling & DevOps
-- `package.json` describes build, lint, test, and seed scripts alongside required dependencies (obfuscation tooling removed).
-- `webpack.prod.js` bundles admin client assets with Babel support; placeholder entry at `src/admin/client/index.js`.
-- Docker Compose stack spins up the web server, MySQL, and Redis for local development (`docker-compose.yml`).
-- GitHub Actions workflow `.github/workflows/ci.yml` runs lint, tests, and build steps with artifact upload.
-
-## Secret handling
-- `.env.secure` (documented in `docs/README_SECURE.md`) loads before runtime defaults so operators can inject sensitive secrets outside the repository.
-
-## Flags & configuration
-- `src/config.js` surfaces runtime flags mirroring operator controls (hidden backlinks, bcrypt cost, 2FA placeholder, etc.).
-- `.gitignore` updated to avoid committing build artifacts, dependencies, and secrets.
-
-## APPLIED CHANGES
-- `sql/seed_admins.js`: Adopted PR role seeding with config-aware bcrypt cost and development-only password logging.
-- `src/admin/auth.js`: Retained PR error code map, parameterized SQL, and rate limiting while flagging future security tasks.
-- `src/admin/routes.js`: Preserved PR query maps, CSRF/helmet wiring, and upload limits; domain locking remains disabled per base logic.
-- `src/config.js`: Merged PR feature flags with base defaults and noted TODO for relocating secrets.
-- `src/db.js`: Kept simple pool factory and documented need to rotate DSN outside development.
-- `src/server.js`: Ensured PR middleware stack with Express error handling returning JSON.
-- `webpack.prod.js`: Retained PR build pipeline without obfuscation hooks.
-- `css/wm_overrides.20240605.css`: Applied PR visual overrides hiding the blue topbar and feature boxes per request.
+- `.github/workflows/ci.yml` runs lint/tests/build on Node 22, mirroring the shared-host runtime.
+- `.env.example` documents all required flags, including `DEV_ADMIN_PASS`, `REDIS_URL`, and `ENABLE_2FA`.
+- `docs/DEPLOYMENT_SHARED_HOSTING.md` (new) provides copy/paste instructions for cPanel (application root, startup file, env vars, build steps).
+- `sql/2025_10_22_init.sql` gained the `status` columns plus `user_totp_secrets`; `sql/seed_admins.js` now enforces explicit passwords in production and prints “DEVELOPMENT ONLY” hints locally.
