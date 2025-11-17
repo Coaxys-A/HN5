@@ -3,7 +3,7 @@ dist/
 .env
 #! development secrets placeholder tracked for documentation
 !admin-secrets.txt
-uploads/*
-!uploads/.gitkeep
+public/uploads/*
+!public/uploads/.gitkeep
 coverage/
 .DS_Store
